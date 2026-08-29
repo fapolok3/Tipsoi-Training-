@@ -1,0 +1,6 @@
+{
+  "name": "TM System",
+  "description": "Comprehensive client training schedule manager, Google Meet link generator, real-time dashboard, and trainer performance reports for TM System.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

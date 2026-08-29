@@ -1,0 +1,29 @@
+{
+  "entities": {
+    "trainings": {
+      "title": "Trainings",
+      "description": "Client training records and schedules for Tipsoi HRM",
+      "type": "object",
+      "properties": {
+        "clientName": { "type": "string", "description": "Name of the client/company" },
+        "ticketId": { "type": "string", "description": "Support or training ticket ID" },
+        "assignedPerson": { "type": "string", "description": "KAM / Sales assigned person" },
+        "package": { "type": "string", "description": "Tipsoi software package" },
+        "manpowerSubmission": { "type": "string", "description": "Manpower submission date or details" },
+        "trainingDate": { "type": "string", "description": "Date of the scheduled training (YYYY-MM-DD or readable)" },
+        "trainingTime": { "type": "string", "description": "Time of training e.g. 11:00 AM" },
+        "pm": { "type": "string", "description": "Trainer / Project Manager name" },
+        "status": { "type": "string", "enum": ["Done", "Hold", "To-Do", "Ongoing", "Cancel", "Ticket Sub Due", "W/O Cancle"] },
+        "meetLink": { "type": "string", "description": "Google Meet or video link" },
+        "clientPhone": { "type": "string", "description": "Contact phone number" },
+        "clientEmail": { "type": "string", "description": "Contact email" },
+        "contactPerson": { "type": "string", "description": "Contact person name" },
+        "remarks": { "type": "string", "description": "Feedback / notes" },
+        "rating": { "type": "number", "description": "Feedback rating 1 to 5" },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["clientName", "trainingDate"]
+    }
+  }
+}
