@@ -4,20 +4,17 @@ import {
   Video, 
   Copy, 
   Check, 
-  Share2, 
   Mail, 
   MessageCircle, 
   ExternalLink, 
   RefreshCw, 
-  Sparkles, 
   Calendar, 
   Clock, 
-  UserCheck, 
   Save,
-  Radio,
   PlayCircle,
-  PlusCircle,
-  Loader2
+  Loader2,
+  AlertCircle,
+  CheckCircle2
 } from 'lucide-react';
 import { TrainingRecord } from '../types';
 import { 
@@ -26,7 +23,7 @@ import {
   getTemplateMessage, 
   GOOGLE_MEET_INSTANT_NEW 
 } from '../services/trainingService';
-import { createRealGoogleMeetEvent } from '../services/googleCalendarService';
+import { createRealGoogleMeetEvent, getGoogleCalendarWebUrl } from '../services/googleCalendarService';
 import confetti from 'canvas-confetti';
 
 interface MeetLinkModalProps {
@@ -52,6 +49,9 @@ export const MeetLinkModal: React.FC<MeetLinkModalProps> = ({
   const [savedStatus, setSavedStatus] = useState(false);
   const [isSchedulingGoogleCalendar, setIsSchedulingGoogleCalendar] = useState(false);
   const [calendarNotice, setCalendarNotice] = useState<string | null>(null);
+  const [calendarUrl, setCalendarUrl] = useState<string | null>(null);
+  const [calendarError, setCalendarError] = useState<string | null>(null);
+  const [organizerEmail, setOrganizerEmail] = useState<string | null>(null);
 
   useEffect(() => {
     if (training) {
@@ -63,7 +63,9 @@ export const MeetLinkModal: React.FC<MeetLinkModalProps> = ({
     } else {
       setMeetLink(generateRandomMeetCode());
     }
-  }, [training]);
+    setCalendarNotice(null);
+    setCalendarError(null);
+  }, [training, isOpen]);
 
   if (!isOpen) return null;
 
@@ -75,6 +77,7 @@ export const MeetLinkModal: React.FC<MeetLinkModalProps> = ({
 
     setIsSchedulingGoogleCalendar(true);
     setCalendarNotice(null);
+    setCalendarError(null);
 
     try {
       const res = await createRealGoogleMeetEvent({
@@ -84,19 +87,26 @@ export const MeetLinkModal: React.FC<MeetLinkModalProps> = ({
         trainingTime,
         pm: trainerName,
         assignedPerson: training?.assignedPerson,
-        package: training?.package
+        package: training?.package,
+        clientEmail: training?.clientEmail
       });
 
       setMeetLink(res.meetLink);
+      setCalendarUrl(res.calendarEventUrl);
+      if (res.organizerEmail) {
+        setOrganizerEmail(res.organizerEmail);
+      }
+
       if (training && onSaveMeetLink) {
         onSaveMeetLink(training.id, res.meetLink);
       }
 
-      setCalendarNotice(`Meeting scheduled on Google Calendar! Real Meet link: ${res.meetLink}`);
-      confetti({ particleCount: 50, spread: 70, origin: { y: 0.6 } });
+      setCalendarNotice(`✅ Google Calendar event created successfully with real Google Meet: ${res.meetLink}`);
+      confetti({ particleCount: 60, spread: 70, origin: { y: 0.6 } });
     } catch (err: any) {
       console.error('Google Calendar Error:', err);
-      alert(`Google Calendar Schedule Error: ${err.message}`);
+      const errMsg = err?.message || 'Failed to connect to Google Calendar';
+      setCalendarError(errMsg);
     } finally {
       setIsSchedulingGoogleCalendar(false);
     }
@@ -133,7 +143,6 @@ export const MeetLinkModal: React.FC<MeetLinkModalProps> = ({
   };
 
   const handleStartInstantGoogleMeet = () => {
-    // Open Google Meet to start an instant official room
     window.open(GOOGLE_MEET_INSTANT_NEW, '_blank');
   };
 
@@ -194,13 +203,13 @@ export const MeetLinkModal: React.FC<MeetLinkModalProps> = ({
             </div>
             <div>
               <h2 className="text-base font-bold text-white flex items-center gap-2">
-                <span>Google Meet Link &amp; Client Invitation</span>
+                <span>Google Meet &amp; Calendar Meeting Creator</span>
                 <span className="px-2 py-0.5 rounded-full text-[10px] bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">
-                  Google Meet
+                  Google Workspace
                 </span>
               </h2>
               <p className="text-xs text-slate-400">
-                Official Google Meet Generator and Client Invitation Dispatch
+                Create real Google Meet video conferences in your logged-in Google Calendar
               </p>
             </div>
           </div>
@@ -212,7 +221,7 @@ export const MeetLinkModal: React.FC<MeetLinkModalProps> = ({
           </button>
         </div>
 
-        {/* Content - Clean auto-sizing layout with no internal scrollbars */}
+        {/* Content */}
         <div className="p-5 sm:p-6 space-y-4 overflow-y-auto no-scrollbar flex-1">
           
           {/* Quick Details Inputs Grid */}
@@ -270,47 +279,108 @@ export const MeetLinkModal: React.FC<MeetLinkModalProps> = ({
             </div>
           </div>
 
-          {/* Authentic Google Meet Link Generator Box */}
-          <div className="bg-slate-950/70 p-3.5 rounded-xl border border-emerald-500/30 space-y-2.5">
+          {/* Authentic Google Meet & Calendar Box */}
+          <div className="bg-slate-950/70 p-4 rounded-xl border border-emerald-500/30 space-y-3">
             
-            {/* Real Google Calendar Integration Banner */}
-            <div className="bg-gradient-to-r from-emerald-950/80 to-slate-900 border border-emerald-500/40 p-2.5 rounded-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5">
+            {/* Action Bar */}
+            <div className="bg-gradient-to-r from-emerald-950/90 via-slate-900 to-slate-900 border border-emerald-500/40 p-3.5 rounded-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
               <div>
-                <h4 className="text-xs font-bold text-emerald-300 flex items-center gap-1.5">
+                <h4 className="text-sm font-bold text-emerald-300 flex items-center gap-2">
                   <Calendar className="w-4 h-4 text-emerald-400" />
-                  <span>Google Calendar Meeting Integration</span>
+                  <span>Schedule in Google Calendar (Primary Account)</span>
                 </h4>
-                <p className="text-[11px] text-slate-300 mt-0.5">
-                  Creates an authentic Google Calendar event under your logged-in Google account with a real Google Meet link.
+                <p className="text-xs text-slate-300 mt-1">
+                  Creates a real event on your Google Calendar with a permanent Google Meet room for this client.
                 </p>
               </div>
               <button
                 disabled={isSchedulingGoogleCalendar}
                 onClick={handleScheduleRealGoogleMeet}
                 id="schedule-google-calendar-meet-btn"
-                className="px-3 py-1.5 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-bold text-xs rounded-xl shadow-lg shadow-emerald-500/20 flex items-center gap-2 transition-all transform active:scale-95 whitespace-nowrap cursor-pointer shrink-0"
+                className="px-4 py-2 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-bold text-xs rounded-xl shadow-lg shadow-emerald-500/25 flex items-center gap-2 transition-all transform active:scale-95 whitespace-nowrap cursor-pointer shrink-0 disabled:opacity-50"
               >
                 {isSchedulingGoogleCalendar ? (
                   <>
-                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                    <span>Connecting Calendar...</span>
+                    <Loader2 className="w-4 h-4 animate-spin text-slate-950" />
+                    <span>Connecting Google Calendar...</span>
                   </>
                 ) : (
                   <>
-                    <Video className="w-3.5 h-3.5" />
+                    <Video className="w-4 h-4 text-slate-950" />
                     <span>Create Real Google Meet Link</span>
                   </>
                 )}
               </button>
             </div>
 
-            {calendarNotice && (
-              <div className="bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 px-3 py-1.5 rounded-lg text-xs font-medium">
-                {calendarNotice}
+            {/* Error Display */}
+            {calendarError && (
+              <div className="bg-rose-500/10 border border-rose-500/30 text-rose-300 p-3 rounded-xl text-xs space-y-1.5">
+                <div className="flex items-center gap-2 font-semibold text-rose-200">
+                  <AlertCircle className="w-4 h-4 text-rose-400 shrink-0" />
+                  <span>Google Calendar Connection Notice</span>
+                </div>
+                <p className="text-[11px] text-rose-300 leading-relaxed">{calendarError}</p>
+                <div className="pt-1 flex items-center gap-2">
+                  <button
+                    onClick={handleScheduleRealGoogleMeet}
+                    className="px-2.5 py-1 bg-rose-500/20 hover:bg-rose-500/30 border border-rose-500/40 rounded-lg text-[11px] font-semibold text-rose-200 transition-colors"
+                  >
+                    Authorize / Try Again
+                  </button>
+                  <a
+                    href={getGoogleCalendarWebUrl({ clientName, ticketId: training?.ticketId, trainingDate, trainingTime, pm: trainerName, assignedPerson: training?.assignedPerson, package: training?.package }, formattedMeetLink)}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-[11px] border border-slate-700"
+                  >
+                    Open Google Calendar Template ↗
+                  </a>
+                </div>
               </div>
             )}
 
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-0.5">
+            {/* Success Display */}
+            {calendarNotice && (
+              <div className="bg-emerald-500/15 border border-emerald-500/40 text-emerald-200 p-3 rounded-xl text-xs space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <span className="font-semibold text-emerald-300 flex items-center gap-1.5">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                    {calendarNotice}
+                  </span>
+                  {organizerEmail && (
+                    <span className="text-[11px] text-slate-300 bg-slate-900/80 px-2 py-0.5 rounded border border-emerald-500/30">
+                      Account: {organizerEmail}
+                    </span>
+                  )}
+                </div>
+                {calendarUrl && (
+                  <div className="pt-1 flex items-center gap-2">
+                    <a
+                      href={calendarUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-500/40 text-emerald-300 text-[11px] font-semibold rounded-lg transition-colors"
+                    >
+                      <Calendar className="w-3.5 h-3.5" />
+                      <span>View in Google Calendar ↗</span>
+                    </a>
+                    <a
+                      href={formattedMeetLink}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-teal-500/20 hover:bg-teal-500/30 border border-teal-500/40 text-teal-300 text-[11px] font-semibold rounded-lg transition-colors"
+                    >
+                      <ExternalLink className="w-3.5 h-3.5" />
+                      <span>Test Join Meet Room ↗</span>
+                    </a>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Meet Link Display & Actions */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-1">
               <label className="text-xs font-bold text-emerald-300 flex items-center gap-2">
                 <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
                 Official Google Meet Link

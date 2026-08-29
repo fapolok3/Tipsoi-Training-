@@ -1,11 +1,11 @@
 {
-  "projectId": "tipsoi-scheduler",
-  "appId": "1:147983550717:web:ca027f5f239c174edc9694",
-  "apiKey": "AIzaSyCHm_YYQz5mvBQAb7hl1u2jdsV2sypIRtk",
-  "authDomain": "tipsoi-scheduler.firebaseapp.com",
-  "storageBucket": "tipsoi-scheduler.firebasestorage.app",
-  "messagingSenderId": "147983550717",
-  "measurementId": "G-3FY0FQ8Z58",
-  "oAuthClientId": "",
+  "projectId": "gen-lang-client-0151640624",
+  "appId": "1:925526768085:web:66d6941253bf49caa7e55c",
+  "apiKey": "AIzaSyBIyClrspyNNtDp00F7t-HhXZcEUd4op58",
+  "authDomain": "gen-lang-client-0151640624.firebaseapp.com",
+  "storageBucket": "gen-lang-client-0151640624.firebasestorage.app",
+  "messagingSenderId": "925526768085",
+  "measurementId": "",
+  "oAuthClientId": "925526768085-v67k05vktrb4303fi7qels9jfaiojbf8.apps.googleusercontent.com",
   "recaptchaSiteKey": ""
 }

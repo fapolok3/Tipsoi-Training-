@@ -20,7 +20,9 @@ import {
 import { TrainingRecord, TrainingStatus, AppDropdownSettings } from '../types';
 import { DEFAULT_DROPDOWN_SETTINGS } from '../data/initialTrainings';
 import { generateRandomMeetCode } from '../services/trainingService';
+import { createRealGoogleMeetEvent } from '../services/googleCalendarService';
 import confetti from 'canvas-confetti';
+import { Loader2 } from 'lucide-react';
 
 interface AddClientModalProps {
   isOpen: boolean;
@@ -58,6 +60,37 @@ export const AddClientModal: React.FC<AddClientModalProps> = ({
   const [remarks, setRemarks] = useState('');
   const [rating, setRating] = useState<number>(5);
   const [loading, setLoading] = useState(false);
+  const [isSchedulingCalendar, setIsSchedulingCalendar] = useState(false);
+  const [calendarSuccessMsg, setCalendarSuccessMsg] = useState<string | null>(null);
+
+  const handleGenerateRealGoogleMeet = async () => {
+    if (!clientName.trim()) {
+      alert('Please enter Client Name before generating Google Meet link.');
+      return;
+    }
+    setIsSchedulingCalendar(true);
+    setCalendarSuccessMsg(null);
+    try {
+      const res = await createRealGoogleMeetEvent({
+        clientName,
+        ticketId,
+        trainingDate,
+        trainingTime,
+        pm,
+        assignedPerson,
+        package: packageType,
+        clientEmail
+      });
+      setMeetLink(res.meetLink);
+      setCalendarSuccessMsg(`Created in Google Calendar (${res.meetLink})`);
+      confetti({ particleCount: 40, spread: 60, origin: { y: 0.6 } });
+    } catch (err: any) {
+      console.error('Calendar error:', err);
+      alert(`Google Calendar: ${err?.message || 'Could not schedule event'}`);
+    } finally {
+      setIsSchedulingCalendar(false);
+    }
+  };
 
   useEffect(() => {
     if (editRecord) {
@@ -300,6 +333,64 @@ export const AddClientModal: React.FC<AddClientModalProps> = ({
                 className="w-full px-3 py-2 bg-slate-950 text-xs text-slate-100 border border-slate-700 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:outline-none"
               />
             </div>
+          </div>
+
+          {/* Section 5: Google Meet Link Generation */}
+          <div className="bg-slate-950/60 p-3.5 rounded-xl border border-slate-700/80 space-y-2">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <label className="text-xs font-semibold text-emerald-300 flex items-center gap-1.5">
+                <Video className="w-4 h-4 text-emerald-400" />
+                <span>Google Meet Link</span>
+              </label>
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  disabled={isSchedulingCalendar}
+                  onClick={handleGenerateRealGoogleMeet}
+                  className="px-2.5 py-1 bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-[11px] font-bold rounded-lg transition-colors cursor-pointer flex items-center gap-1 shadow-sm disabled:opacity-50"
+                  title="Creates real meeting on your logged in Google Calendar"
+                >
+                  {isSchedulingCalendar ? (
+                    <>
+                      <Loader2 className="w-3 h-3 animate-spin" />
+                      <span>Scheduling...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Calendar className="w-3 h-3" />
+                      <span>Create on Google Calendar</span>
+                    </>
+                  )}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setMeetLink(generateRandomMeetCode())}
+                  className="px-2 py-1 bg-slate-800 hover:bg-slate-700 text-emerald-300 border border-slate-700 text-[11px] font-semibold rounded-lg transition-colors cursor-pointer"
+                >
+                  ⚡ Fast Code
+                </button>
+                <a
+                  href="https://meet.google.com/new"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="px-2 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 text-[11px] font-medium rounded-lg transition-colors"
+                >
+                  meet.google.com ↗
+                </a>
+              </div>
+            </div>
+            {calendarSuccessMsg && (
+              <p className="text-[11px] text-emerald-300 bg-emerald-500/10 px-2 py-1 rounded border border-emerald-500/20">
+                ✅ {calendarSuccessMsg}
+              </p>
+            )}
+            <input
+              type="text"
+              value={meetLink}
+              onChange={(e) => setMeetLink(e.target.value)}
+              placeholder="https://meet.google.com/xxx-yyyy-zzz (Auto-generated if left blank)"
+              className="w-full px-3 py-2 bg-slate-950 font-mono text-xs text-emerald-400 border border-slate-700 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+            />
           </div>
 
           {/* Section 6: Optional Contact Information */}

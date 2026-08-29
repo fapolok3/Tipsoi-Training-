@@ -40,28 +40,44 @@ const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 export const auth = getAuth(app);
 export const db = getFirestore(app);
 export const googleProvider = new GoogleAuthProvider();
+googleProvider.addScope('https://www.googleapis.com/auth/calendar.events');
 
-export const signInWithGoogle = async (): Promise<User | null> => {
+let cachedGoogleAccessToken: string | null = null;
+
+export const getCachedGoogleAccessToken = (): string | null => {
+  return cachedGoogleAccessToken;
+};
+
+export const setCachedGoogleAccessToken = (token: string | null): void => {
+  cachedGoogleAccessToken = token;
+};
+
+export const signInWithGoogle = async (): Promise<{ user: User | null; accessToken: string | null }> => {
   try {
     googleProvider.setCustomParameters({ prompt: 'select_account' });
     const result = await signInWithPopup(auth, googleProvider);
-    return result.user;
+    const credential = GoogleAuthProvider.credentialFromResult(result);
+    if (credential?.accessToken) {
+      cachedGoogleAccessToken = credential.accessToken;
+    }
+    return { user: result.user, accessToken: cachedGoogleAccessToken };
   } catch (error: any) {
     const code = error?.code || '';
     if (code === 'auth/unauthorized-domain' || error?.message?.includes('unauthorized-domain')) {
       console.warn('Firebase Auth notice: Domain is not yet in Firebase authorized domains list. Using authenticated admin session.');
-      return null;
+      return { user: null, accessToken: null };
     }
     if (code === 'auth/popup-closed-by-user' || code === 'auth/cancelled-popup-request') {
-      return null;
+      return { user: null, accessToken: null };
     }
     console.warn('Google Sign In notification:', error?.message || error);
-    return null;
+    return { user: null, accessToken: null };
   }
 };
 
 export const logoutUser = async () => {
   try {
+    cachedGoogleAccessToken = null;
     await signOut(auth);
   } catch (error) {
     console.error('Logout error:', error);

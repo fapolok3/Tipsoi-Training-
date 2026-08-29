@@ -10,13 +10,11 @@ import {
   Sparkles, 
   Calendar, 
   Clock, 
-  UserCheck, 
-  Building2, 
   CheckCircle2,
   Share2,
   PlayCircle,
-  Radio,
-  Loader2
+  Loader2,
+  AlertCircle
 } from 'lucide-react';
 import { TrainingRecord } from '../types';
 import { 
@@ -25,7 +23,7 @@ import {
   getTemplateMessage, 
   GOOGLE_MEET_INSTANT_NEW 
 } from '../services/trainingService';
-import { createRealGoogleMeetEvent } from '../services/googleCalendarService';
+import { createRealGoogleMeetEvent, getGoogleCalendarWebUrl } from '../services/googleCalendarService';
 import { TRAINERS_LIST } from '../data/initialTrainings';
 import confetti from 'canvas-confetti';
 
@@ -40,7 +38,6 @@ export const MeetLinkStudio: React.FC<MeetLinkStudioProps> = ({ trainings }) => 
     return trainings.filter(item => {
       if (!item.trainingDate) return false;
       const status = (item.status || '').toLowerCase();
-      // Exclude cancelled or finished sessions
       if (status.includes('cancle') || status.includes('cancel') || status.includes('done') || status === 'completed') {
         return false;
       }
@@ -59,6 +56,8 @@ export const MeetLinkStudio: React.FC<MeetLinkStudioProps> = ({ trainings }) => 
   const [linkCopied, setLinkCopied] = useState<boolean>(false);
   const [isSchedulingCalendar, setIsSchedulingCalendar] = useState<boolean>(false);
   const [calendarNotice, setCalendarNotice] = useState<string | null>(null);
+  const [calendarError, setCalendarError] = useState<string | null>(null);
+  const [calendarUrl, setCalendarUrl] = useState<string | null>(null);
 
   const handleSelectClient = (name: string) => {
     setSelectedClient(name);
@@ -109,6 +108,7 @@ export const MeetLinkStudio: React.FC<MeetLinkStudioProps> = ({ trainings }) => 
 
     setIsSchedulingCalendar(true);
     setCalendarNotice(null);
+    setCalendarError(null);
 
     try {
       const found = trainings.find(t => t.clientName === selectedClient);
@@ -119,15 +119,17 @@ export const MeetLinkStudio: React.FC<MeetLinkStudioProps> = ({ trainings }) => 
         trainingTime: trainingTime,
         pm: trainerName,
         assignedPerson: found?.assignedPerson,
-        package: found?.package
+        package: found?.package,
+        clientEmail: found?.clientEmail
       });
 
       setMeetLink(res.meetLink);
-      setCalendarNotice(`Meeting scheduled on Google Calendar! Real Google Meet link created: ${res.meetLink}`);
+      setCalendarUrl(res.calendarEventUrl);
+      setCalendarNotice(`✅ Google Calendar event scheduled with real Google Meet: ${res.meetLink}`);
       confetti({ particleCount: 50, spread: 70, origin: { y: 0.6 } });
     } catch (err: any) {
       console.error('Calendar Error:', err);
-      alert(`Google Calendar Error: ${err.message}`);
+      setCalendarError(err?.message || 'Failed to schedule Google Calendar event');
     } finally {
       setIsSchedulingCalendar(false);
     }
@@ -297,7 +299,7 @@ export const MeetLinkStudio: React.FC<MeetLinkStudioProps> = ({ trainings }) => 
               disabled={isSchedulingCalendar}
               onClick={handleScheduleGoogleCalendar}
               id="studio-schedule-google-calendar-btn"
-              className="w-full py-2 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-bold text-xs rounded-xl shadow-lg shadow-emerald-500/20 flex items-center justify-center gap-2 transition-all transform active:scale-95 cursor-pointer"
+              className="w-full py-2 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-bold text-xs rounded-xl shadow-lg shadow-emerald-500/20 flex items-center justify-center gap-2 transition-all transform active:scale-95 cursor-pointer disabled:opacity-50"
             >
               {isSchedulingCalendar ? (
                 <>
@@ -311,10 +313,40 @@ export const MeetLinkStudio: React.FC<MeetLinkStudioProps> = ({ trainings }) => 
                 </>
               )}
             </button>
+
+            {calendarError && (
+              <div className="text-[11px] text-rose-300 bg-rose-500/10 p-2 rounded-lg border border-rose-500/20 space-y-1">
+                <div className="flex items-center gap-1 font-semibold text-rose-200">
+                  <AlertCircle className="w-3.5 h-3.5" />
+                  <span>Error connecting Calendar</span>
+                </div>
+                <p>{calendarError}</p>
+                <button
+                  onClick={handleScheduleGoogleCalendar}
+                  className="mt-1 px-2 py-0.5 bg-rose-500/20 hover:bg-rose-500/30 rounded text-[10px] font-semibold text-rose-200"
+                >
+                  Retry
+                </button>
+              </div>
+            )}
+
             {calendarNotice && (
-              <p className="text-[11px] text-emerald-300 bg-emerald-500/10 p-2 rounded-lg border border-emerald-500/20">
-                {calendarNotice}
-              </p>
+              <div className="text-[11px] text-emerald-300 bg-emerald-500/10 p-2 rounded-lg border border-emerald-500/20 space-y-1">
+                <p className="flex items-center gap-1.5 font-medium">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                  <span>{calendarNotice}</span>
+                </p>
+                {calendarUrl && (
+                  <a
+                    href={calendarUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-block mt-1 text-[11px] text-emerald-400 hover:underline font-semibold"
+                  >
+                    Open in Google Calendar ↗
+                  </a>
+                )}
+              </div>
             )}
           </div>
 

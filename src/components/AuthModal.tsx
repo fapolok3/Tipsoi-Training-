@@ -34,7 +34,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     setLoading(true);
     setErrorMsg('');
     try {
-      const user = await signInWithGoogle();
+      const { user } = await signInWithGoogle();
       if (user) {
         onLoginSuccess({
           uid: user.uid,
