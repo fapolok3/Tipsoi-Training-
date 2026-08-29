@@ -1,11 +1,11 @@
 {
-  "projectId": "abiding-bloom-4c9s2",
-  "appId": "1:170400716318:web:c987edf512ec3b8b0cc00f",
-  "apiKey": "AIzaSyCk14CSkFuwe6By2eVdCOZy2xDukkTMFJs",
-  "authDomain": "abiding-bloom-4c9s2.firebaseapp.com",
-  "storageBucket": "abiding-bloom-4c9s2.firebasestorage.app",
-  "messagingSenderId": "170400716318",
-  "measurementId": "",
-  "oAuthClientId": "170400716318-5hrv1jlpp6fmlpar3vi2vspmu4vnt3hj.apps.googleusercontent.com",
+  "projectId": "tipsoi-scheduler",
+  "appId": "1:147983550717:web:ca027f5f239c174edc9694",
+  "apiKey": "AIzaSyCHm_YYQz5mvBQAb7hl1u2jdsV2sypIRtk",
+  "authDomain": "tipsoi-scheduler.firebaseapp.com",
+  "storageBucket": "tipsoi-scheduler.firebasestorage.app",
+  "messagingSenderId": "147983550717",
+  "measurementId": "G-3FY0FQ8Z58",
+  "oAuthClientId": "",
   "recaptchaSiteKey": ""
 }

@@ -24,19 +24,21 @@ import {
 } from 'firebase/auth';
 import configJson from '../../firebase-applet-config.json';
 
-const firebaseConfig = configJson || {
-  projectId: "abiding-bloom-4c9s2",
-  appId: "1:170400716318:web:c987edf512ec3b8b0cc00f",
-  apiKey: "AIzaSyCk14CSkFuwe6By2eVdCOZy2xDukkTMFJs",
-  authDomain: "abiding-bloom-4c9s2.firebaseapp.com",
-  firestoreDatabaseId: "ai-studio-9e61b7d5-36f6-4f51-abdc-95a09a20d392",
-  storageBucket: "abiding-bloom-4c9s2.firebasestorage.app",
-  messagingSenderId: "170400716318"
+const env = (import.meta as any).env || {};
+
+const firebaseConfig = {
+  apiKey: env.VITE_FIREBASE_API_KEY || configJson?.apiKey || "AIzaSyCHm_YYQz5mvBQAb7hl1u2jdsV2sypIRtk",
+  authDomain: env.VITE_FIREBASE_AUTH_DOMAIN || configJson?.authDomain || "tipsoi-scheduler.firebaseapp.com",
+  projectId: env.VITE_FIREBASE_PROJECT_ID || configJson?.projectId || "tipsoi-scheduler",
+  storageBucket: env.VITE_FIREBASE_STORAGE_BUCKET || configJson?.storageBucket || "tipsoi-scheduler.firebasestorage.app",
+  messagingSenderId: env.VITE_FIREBASE_MESSAGING_SENDER_ID || configJson?.messagingSenderId || "147983550717",
+  appId: env.VITE_FIREBASE_APP_ID || configJson?.appId || "1:147983550717:web:ca027f5f239c174edc9694",
+  measurementId: env.VITE_FIREBASE_MEASUREMENT_ID || configJson?.measurementId || "G-3FY0FQ8Z58"
 };
 
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 export const auth = getAuth(app);
-export const db = getFirestore(app, (firebaseConfig as any).firestoreDatabaseId || 'ai-studio-9e61b7d5-36f6-4f51-abdc-95a09a20d392');
+export const db = getFirestore(app);
 export const googleProvider = new GoogleAuthProvider();
 
 export const signInWithGoogle = async (): Promise<User | null> => {
