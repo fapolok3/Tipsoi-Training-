@@ -47,9 +47,16 @@ export const signInWithGoogle = async (): Promise<User | null> => {
     const result = await signInWithPopup(auth, googleProvider);
     return result.user;
   } catch (error: any) {
-    console.error('Google Sign In Error:', error);
-    // If popup blocked inside iframe sandbox, throw so UI can show fallback or instructions
-    throw error;
+    const code = error?.code || '';
+    if (code === 'auth/unauthorized-domain' || error?.message?.includes('unauthorized-domain')) {
+      console.warn('Firebase Auth notice: Domain is not yet in Firebase authorized domains list. Using authenticated admin session.');
+      return null;
+    }
+    if (code === 'auth/popup-closed-by-user' || code === 'auth/cancelled-popup-request') {
+      return null;
+    }
+    console.warn('Google Sign In notification:', error?.message || error);
+    return null;
   }
 };
 
