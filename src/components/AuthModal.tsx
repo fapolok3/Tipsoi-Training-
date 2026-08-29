@@ -47,8 +47,11 @@ export const AuthModal: React.FC<AuthModalProps> = ({
       }
     } catch (err: any) {
       console.error('Google Auth Failed:', err);
-      // Helpful message if iframe restricts popups
-      setErrorMsg(err.message || 'Google Sign-In failed or popup was blocked in preview. You can also sign in with demo accounts below.');
+      if (err?.code === 'auth/unauthorized-domain' || err?.message?.includes('unauthorized-domain')) {
+        setErrorMsg('Firebase Error: Unauthorized Domain! Vercel domain is not authorized in Firebase Console yet.');
+      } else {
+        setErrorMsg(err?.message || 'Google Sign-In failed or popup was blocked in preview. You can also sign in with demo accounts below.');
+      }
     } finally {
       setLoading(false);
     }
@@ -96,9 +99,22 @@ export const AuthModal: React.FC<AuthModalProps> = ({
         <div className="p-6 space-y-4">
           
           {errorMsg && (
-            <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs flex items-start gap-2">
-              <AlertCircle className="w-4 h-4 text-rose-400 flex-shrink-0 mt-0.5" />
-              <span>{errorMsg}</span>
+            <div className="p-3.5 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs space-y-2">
+              <div className="flex items-start gap-2">
+                <AlertCircle className="w-4 h-4 text-rose-400 flex-shrink-0 mt-0.5" />
+                <span className="font-medium">{errorMsg}</span>
+              </div>
+              {errorMsg.includes('unauthorized-domain') && (
+                <div className="mt-2 pt-2 border-t border-rose-500/20 text-[11px] text-slate-300 space-y-1 pl-6">
+                  <p className="font-semibold text-rose-300">Vercel এ Gmail Login চালু করার নিয়ম:</p>
+                  <ol className="list-decimal pl-4 space-y-1 text-slate-300">
+                    <li><strong>Firebase Console</strong>-এ যান (<a href="https://console.firebase.google.com" target="_blank" rel="noreferrer" className="underline text-emerald-400">console.firebase.google.com</a>)</li>
+                    <li><strong>Authentication</strong> → <strong>Settings</strong> → <strong>Settings tab</strong> → <strong>Authorized domains</strong> এ যান।</li>
+                    <li><strong>Add domain</strong> বাটনে ক্লিক করে আপনার Vercel domain (যেমন: <code>your-app-name.vercel.app</code>) টি paste করে <strong>Save</strong> করুন।</li>
+                  </ol>
+                  <p className="text-[10px] text-slate-400 pt-1">Domain যোগ করার ২ মিনিটের মধ্যে Vercel সাইটে Gmail Login কাজ করা শুরু করবে।</p>
+                </div>
+              )}
             </div>
           )}
 
