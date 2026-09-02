@@ -1,13 +1,9 @@
 import React, { useState } from 'react';
 import { 
   X, 
-  Mail, 
-  Lock, 
   ShieldCheck, 
   LogIn, 
-  UserCheck, 
-  AlertCircle, 
-  Sparkles 
+  AlertCircle
 } from 'lucide-react';
 import { signInWithGoogle } from '../lib/firebase';
 import { UserProfile } from '../types';
@@ -25,8 +21,6 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 }) => {
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
 
   if (!isOpen) return null;
 
@@ -44,51 +38,13 @@ export const AuthModal: React.FC<AuthModalProps> = ({
           role: 'admin'
         });
         onClose();
-      } else {
-        // Fallback for unauthorized domains or local testing: sign in as fapolok3@gmail.com
-        onLoginSuccess({
-          uid: 'admin-google-user',
-          email: 'fapolok3@gmail.com',
-          displayName: 'Admin User (fapolok3)',
-          photoURL: null,
-          role: 'admin'
-        });
-        onClose();
       }
     } catch (err: any) {
-      onLoginSuccess({
-        uid: 'admin-google-user',
-        email: 'fapolok3@gmail.com',
-        displayName: 'Admin User (fapolok3)',
-        photoURL: null,
-        role: 'admin'
-      });
-      onClose();
+      console.error('Google Sign In Error:', err);
+      setErrorMsg(err?.message || 'Failed to sign in with Google');
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleQuickAdminSignIn = () => {
-    onLoginSuccess({
-      uid: 'admin-quick-user',
-      email: 'fapolok3@gmail.com',
-      displayName: 'System Admin (Full Access)',
-      photoURL: null,
-      role: 'admin'
-    });
-    onClose();
-  };
-
-  const handleDemoSignIn = (trainerName: string, email: string) => {
-    onLoginSuccess({
-      uid: `demo-${trainerName.toLowerCase()}`,
-      email: email,
-      displayName: `${trainerName} (Trainer)`,
-      photoURL: null,
-      role: 'trainer'
-    });
-    onClose();
   };
 
   return (
@@ -112,7 +68,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+            className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
@@ -142,12 +98,12 @@ export const AuthModal: React.FC<AuthModalProps> = ({
           )}
 
           {/* Primary Google Login Button */}
-          <div className="space-y-2">
+          <div className="space-y-3 pt-2">
             <button
               onClick={handleGoogleSignIn}
               disabled={loading}
               id="google-signin-btn"
-              className="w-full py-2.5 px-4 bg-white hover:bg-slate-100 text-slate-900 font-bold text-xs rounded-xl shadow-lg flex items-center justify-center gap-3 transition-all transform active:scale-95 cursor-pointer disabled:opacity-50"
+              className="w-full py-3 px-4 bg-white hover:bg-slate-100 text-slate-900 font-bold text-xs rounded-xl shadow-lg flex items-center justify-center gap-3 transition-all transform active:scale-95 cursor-pointer disabled:opacity-50"
             >
               <svg className="w-4 h-4" viewBox="0 0 24 24">
                 <path
@@ -170,71 +126,9 @@ export const AuthModal: React.FC<AuthModalProps> = ({
               <span>{loading ? 'Signing In...' : 'Continue with Google / Gmail'}</span>
             </button>
 
-            <button
-              onClick={handleQuickAdminSignIn}
-              id="instant-admin-btn"
-              className="w-full py-2.5 px-4 bg-emerald-600/20 hover:bg-emerald-600/30 border border-emerald-500/40 text-emerald-300 font-bold text-xs rounded-xl flex items-center justify-center gap-2 transition-all cursor-pointer"
-            >
-              <ShieldCheck className="w-4 h-4 text-emerald-400" />
-              <span>Instant Admin Mode (fapolok3@gmail.com)</span>
-            </button>
-          </div>
-
-          <div className="relative flex py-2 items-center">
-            <div className="flex-grow border-t border-slate-800"></div>
-            <span className="flex-shrink mx-3 text-[11px] text-slate-400 font-medium uppercase">Or Select Demo Trainer</span>
-            <div className="flex-grow border-t border-slate-800"></div>
-          </div>
-
-          {/* Quick Trainer Demo Logins */}
-          <div className="space-y-2">
-            <button
-              onClick={() => handleDemoSignIn('Shahin', 'shahin.trainer@tipsoi.com')}
-              className="w-full p-2.5 bg-slate-950/60 hover:bg-slate-800 border border-slate-800 hover:border-emerald-500/40 rounded-xl flex items-center justify-between text-xs transition-colors"
-            >
-              <div className="flex items-center gap-2.5">
-                <div className="w-7 h-7 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold">
-                  S
-                </div>
-                <div className="text-left">
-                  <span className="font-semibold text-white block">Shahin</span>
-                  <span className="text-[10px] text-slate-400">Senior Trainer (85+ completed)</span>
-                </div>
-              </div>
-              <span className="text-emerald-400 text-[11px] font-semibold">Sign In →</span>
-            </button>
-
-            <button
-              onClick={() => handleDemoSignIn('Badhon', 'badhon.trainer@tipsoi.com')}
-              className="w-full p-2.5 bg-slate-950/60 hover:bg-slate-800 border border-slate-800 hover:border-emerald-500/40 rounded-xl flex items-center justify-between text-xs transition-colors"
-            >
-              <div className="flex items-center gap-2.5">
-                <div className="w-7 h-7 rounded-lg bg-purple-500/20 text-purple-400 flex items-center justify-center font-bold">
-                  B
-                </div>
-                <div className="text-left">
-                  <span className="font-semibold text-white block">Badhon</span>
-                  <span className="text-[10px] text-slate-400">Payroll &amp; Technical Trainer</span>
-                </div>
-              </div>
-              <span className="text-emerald-400 text-[11px] font-semibold">Sign In →</span>
-            </button>
-
-            <button
-              onClick={() => handleDemoSignIn('Anika', 'anika.trainer@tipsoi.com')}
-              className="w-full p-2.5 bg-slate-950/60 hover:bg-slate-800 border border-slate-800 hover:border-emerald-500/40 rounded-xl flex items-center justify-between text-xs transition-colors"
-            >
-              <div className="flex items-center gap-2.5">
-                <div className="w-7 h-7 rounded-lg bg-teal-500/20 text-teal-400 flex items-center justify-center font-bold">
-                  A
-                </div>
-                <div className="text-left">
-                  <span className="font-semibold text-white block">Anika</span>
-                  <span className="text-[10px] text-slate-400">Geo Fence &amp; Client Success</span>
-                </div>
-              </div>
-              <span className="text-emerald-400 text-[11px] font-semibold">Sign In →</span>
-            </button>
+            <p className="text-[11px] text-center text-slate-400">
+              Sign in with your official Google account to schedule trainings and sync with Google Calendar.
+            </p>
           </div>
 
         </div>
