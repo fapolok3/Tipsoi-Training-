@@ -28,7 +28,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     setLoading(true);
     setErrorMsg('');
     try {
-      const { user } = await signInWithGoogle();
+      const { user, error } = await signInWithGoogle();
       if (user) {
         onLoginSuccess({
           uid: user.uid,
@@ -38,6 +38,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({
           role: 'admin'
         });
         onClose();
+      } else if (error) {
+        setErrorMsg(error);
       }
     } catch (err: any) {
       console.error('Google Sign In Error:', err);

@@ -52,7 +52,7 @@ export const setCachedGoogleAccessToken = (token: string | null): void => {
   cachedGoogleAccessToken = token;
 };
 
-export const signInWithGoogle = async (): Promise<{ user: User | null; accessToken: string | null }> => {
+export const signInWithGoogle = async (): Promise<{ user: User | null; accessToken: string | null; error?: string }> => {
   try {
     googleProvider.setCustomParameters({ prompt: 'select_account' });
     const result = await signInWithPopup(auth, googleProvider);
@@ -63,15 +63,20 @@ export const signInWithGoogle = async (): Promise<{ user: User | null; accessTok
     return { user: result.user, accessToken: cachedGoogleAccessToken };
   } catch (error: any) {
     const code = error?.code || '';
-    if (code === 'auth/unauthorized-domain' || error?.message?.includes('unauthorized-domain')) {
-      console.warn('Firebase Auth notice: Domain is not yet in Firebase authorized domains list. Using authenticated admin session.');
-      return { user: null, accessToken: null };
-    }
+    const message = error?.message || 'Authentication failed';
+    console.error('Firebase Auth Sign In Error:', code, message);
+    
     if (code === 'auth/popup-closed-by-user' || code === 'auth/cancelled-popup-request') {
-      return { user: null, accessToken: null };
+      return { user: null, accessToken: null, error: 'Sign-in popup was closed before completing.' };
     }
-    console.warn('Google Sign In notification:', error?.message || error);
-    return { user: null, accessToken: null };
+    if (code === 'auth/unauthorized-domain') {
+      return { 
+        user: null, 
+        accessToken: null, 
+        error: `Firebase Unauthorized Domain (${window.location.hostname}). Please add "${window.location.hostname}" to Firebase Console -> Authentication -> Settings -> Authorized Domains.` 
+      };
+    }
+    return { user: null, accessToken: null, error: message };
   }
 };
 
