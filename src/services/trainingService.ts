@@ -19,9 +19,43 @@ const SEEDED_FLAG_KEY = 'tipsoi_firestore_seeded_v2';
 
 export const GOOGLE_MEET_INSTANT_NEW = 'https://meet.google.com/new';
 
+export const getCachedTrainings = (): TrainingRecord[] => {
+  try {
+    const cached = localStorage.getItem(LOCAL_STORAGE_KEY);
+    if (cached) {
+      const parsed = JSON.parse(cached);
+      if (Array.isArray(parsed)) {
+        return parsed;
+      }
+    }
+  } catch {
+    // ignore
+  }
+  return [];
+};
+
+export const getCachedDropdownSettings = (): AppDropdownSettings => {
+  try {
+    const cached = localStorage.getItem(SETTINGS_STORAGE_KEY);
+    if (cached) {
+      return JSON.parse(cached);
+    }
+  } catch {
+    // ignore
+  }
+  return DEFAULT_DROPDOWN_SETTINGS;
+};
+
+const withTimeout = <T>(promise: Promise<T>, ms: number = 2500): Promise<T> => {
+  return Promise.race([
+    promise,
+    new Promise<T>((_, reject) => setTimeout(() => reject(new Error('Firestore timeout')), ms))
+  ]);
+};
+
 export const fetchDropdownSettings = async (): Promise<AppDropdownSettings> => {
   try {
-    const snap = await getDocs(collection(db, 'settings'));
+    const snap = await withTimeout(getDocs(collection(db, 'settings')), 2500);
     const found = snap.docs.find(d => d.id === SETTINGS_DOC);
     if (found && found.exists()) {
       const data = found.data() as AppDropdownSettings;
@@ -29,18 +63,10 @@ export const fetchDropdownSettings = async (): Promise<AppDropdownSettings> => {
       return data;
     }
   } catch (err) {
-    console.warn('Could not fetch settings from Firestore, checking local storage:', err);
+    console.warn('Settings load notice, using local cache:', err);
   }
 
-  const cached = localStorage.getItem(SETTINGS_STORAGE_KEY);
-  if (cached) {
-    try {
-      return JSON.parse(cached);
-    } catch {
-      return DEFAULT_DROPDOWN_SETTINGS;
-    }
-  }
-  return DEFAULT_DROPDOWN_SETTINGS;
+  return getCachedDropdownSettings();
 };
 
 export const saveDropdownSettings = async (settings: AppDropdownSettings): Promise<void> => {
@@ -154,17 +180,9 @@ export const deleteAllSystemTrainings = async (): Promise<void> => {
 };
 
 export const fetchTrainings = async (): Promise<TrainingRecord[]> => {
-  // Purge all legacy seed data from Firestore and local cache
-  const isPurged = localStorage.getItem('tm_system_purged_v1') === 'true';
-  if (!isPurged) {
-    await deleteAllSystemTrainings();
-    localStorage.setItem('tm_system_purged_v1', 'true');
-    return [];
-  }
-
   try {
     const colRef = collection(db, COLLECTION_NAME);
-    const snapshot = await getDocs(colRef);
+    const snapshot = await withTimeout(getDocs(colRef), 2500);
 
     if (snapshot.empty) {
       localStorage.setItem(SEEDED_FLAG_KEY, 'true');
@@ -187,19 +205,8 @@ export const fetchTrainings = async (): Promise<TrainingRecord[]> => {
     localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(items));
     return items;
   } catch (error) {
-    console.warn('Error fetching from Firestore, falling back to local cache:', error);
-    const cached = localStorage.getItem(LOCAL_STORAGE_KEY);
-    if (cached) {
-      try {
-        const parsed = JSON.parse(cached);
-        if (Array.isArray(parsed)) {
-          return parsed;
-        }
-      } catch {
-        // Fallback
-      }
-    }
-    return [];
+    console.warn('Network notice when fetching from Firestore, using local cache:', error);
+    return getCachedTrainings();
   }
 };
 

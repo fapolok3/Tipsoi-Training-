@@ -19,6 +19,8 @@ import { TrainingRecord, TrainingStatus, UserProfile, AppDropdownSettings } from
 import { DEFAULT_DROPDOWN_SETTINGS } from './data/initialTrainings';
 import { 
   fetchTrainings, 
+  getCachedTrainings,
+  getCachedDropdownSettings,
   saveTraining, 
   updateTrainingStatus, 
   deleteTrainingRecord,
@@ -33,9 +35,21 @@ import { Loader2, RefreshCw, CheckCircle2, X } from 'lucide-react';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<'dashboard' | 'clients' | 'reports' | 'generator' | 'settings'>('dashboard');
-  const [trainings, setTrainings] = useState<TrainingRecord[]>([]);
-  const [dropdownSettings, setDropdownSettings] = useState<AppDropdownSettings>(DEFAULT_DROPDOWN_SETTINGS);
-  const [loading, setLoading] = useState<boolean>(true);
+
+  const deduplicateList = (list: TrainingRecord[]): TrainingRecord[] => {
+    const seen = new Set<string>();
+    return list.filter(item => {
+      if (!item || !item.id) return false;
+      const key = String(item.id);
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+  };
+
+  const [trainings, setTrainings] = useState<TrainingRecord[]>(() => deduplicateList(getCachedTrainings()));
+  const [dropdownSettings, setDropdownSettings] = useState<AppDropdownSettings>(() => getCachedDropdownSettings());
+  const [loading, setLoading] = useState<boolean>(false);
   const [isSyncing, setIsSyncing] = useState<boolean>(false);
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [toastMessage, setToastMessage] = useState<{ title: string; desc?: string } | null>(null);
@@ -60,21 +74,11 @@ export default function App() {
   const [isExcelModalOpen, setIsExcelModalOpen] = useState<boolean>(false);
   const [currentUser, setCurrentUser] = useState<UserProfile | null>(null);
 
-  const deduplicateList = (list: TrainingRecord[]): TrainingRecord[] => {
-    const seen = new Set<string>();
-    return list.filter(item => {
-      if (!item || !item.id) return false;
-      const key = String(item.id);
-      if (seen.has(key)) return false;
-      seen.add(key);
-      return true;
-    });
-  };
-
   // Load Data
   const loadData = async (isManualSync = false) => {
-    if (isManualSync) setIsSyncing(true);
-    else setLoading(true);
+    if (isManualSync) {
+      setIsSyncing(true);
+    }
 
     try {
       const [trainingsData, settingsData] = await Promise.all([
